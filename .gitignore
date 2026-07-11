@@ -1,0 +1,29 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.gitdir/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# Common dependency/build outputs
+node_modules/
+dist/
+build/
+out/
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
