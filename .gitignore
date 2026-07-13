@@ -3,7 +3,6 @@
 Thumbs.db
 .vscode/
 .idea/
-.gitdir/
 
 # Logs and temporary files
 *.log
