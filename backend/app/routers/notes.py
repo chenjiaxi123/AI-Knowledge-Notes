@@ -1,7 +1,8 @@
-from typing import List
+from datetime import date, datetime, time
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
@@ -70,13 +71,46 @@ def create_note(note_in: NoteCreate, db: Session = Depends(get_db)) -> Note:
 
 @router.get("", response_model=NoteListResponse)
 def list_notes(
+    q: Optional[str] = None,
+    tag: Optional[str] = None,
+    source: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     db: Session = Depends(get_db),
 ) -> NoteListResponse:
-    total = db.query(func.count(Note.id)).scalar() or 0
+    query = db.query(Note)
+
+    if q:
+        keyword_text = q.strip()
+        if keyword_text:
+            keyword = f"%{keyword_text}%"
+            query = query.filter(
+                or_(
+                    Note.title.ilike(keyword),
+                    Note.summary.ilike(keyword),
+                    Note.original_content.ilike(keyword),
+                    Note.knowledge_points.any(KnowledgePoint.content.ilike(keyword)),
+                    Note.tags.any(Tag.name.ilike(keyword)),
+                )
+            )
+
+    if tag:
+        query = query.filter(Note.tags.any(Tag.name == tag.strip()))
+
+    if source:
+        query = query.filter(Note.source == source.strip())
+
+    if start_date:
+        query = query.filter(Note.created_at >= datetime.combine(start_date, time.min))
+
+    if end_date:
+        query = query.filter(Note.created_at <= datetime.combine(end_date, time.max))
+
+    total = query.with_entities(func.count(Note.id)).scalar() or 0
     notes = (
-        db.query(Note)
+        query
         .options(selectinload(Note.tags))
         .order_by(Note.created_at.desc(), Note.id.desc())
         .offset((page - 1) * page_size)
@@ -117,4 +151,3 @@ def delete_note(note_id: int, db: Session = Depends(get_db)) -> dict[str, str]:
     db.delete(note)
     db.commit()
     return {"message": "Note deleted successfully"}
-
