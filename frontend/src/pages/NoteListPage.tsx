@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { getNotes } from "../api/notes";
 import type { NoteListItem } from "../types/note";
@@ -76,7 +77,11 @@ export function NoteListPage() {
       {!isLoading && !error && notes.length > 0 && (
         <div className="grid gap-4">
           {notes.map((note) => (
-            <article key={note.id} className="rounded-md border border-slate-200 bg-white p-4">
+            <Link
+              key={note.id}
+              to={`/notes/${note.id}`}
+              className="block rounded-md border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm"
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold">{note.title}</h3>
@@ -101,7 +106,7 @@ export function NoteListPage() {
                   <span className="text-xs text-slate-500">No tags</span>
                 )}
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       )}
